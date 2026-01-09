@@ -1,0 +1,10 @@
+# mTLS PERMISSIVE mode - Cho phép cả plaintext và mTLS
+# Phù hợp cho môi trường demo, cho phép dần dần migrate sang mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: demo
+spec:
+  mtls:
+    mode: PERMISSIVE

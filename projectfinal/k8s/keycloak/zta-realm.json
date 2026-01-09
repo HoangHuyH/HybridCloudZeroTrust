@@ -1,0 +1,121 @@
+{
+  "realm": "zta",
+  "enabled": true,
+  "displayName": "Zero Trust Demo - UIT Capstone",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "sslRequired": "none",
+  "accessTokenLifespan": 300,
+  "roles": {
+    "realm": [
+      { "name": "giangvien", "description": "Role dành cho Giảng viên - Có quyền truy cập /api/giangvien" },
+      { "name": "sinhvien", "description": "Role dành cho Sinh viên - Chỉ được truy cập /api/sinhvien" }
+    ]
+  },
+  "scopeMappings": [
+    {
+      "client": "oauth2-proxy",
+      "roles": ["giangvien", "sinhvien"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "oauth2-proxy",
+      "name": "OAuth2 Proxy for Zero Trust Demo",
+      "description": "Client để oauth2-proxy xác thực với Keycloak",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "N7GPQmiuKYUuxveluERsMKD1KzoweMIt",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://app.172.10.0.190.nip.io:31691/*",
+        "http://app.172.10.0.190.nip.io/*",
+        "http://oauth2-proxy.demo.svc.cluster.local:4180/*"
+      ],
+      "webOrigins": [
+        "http://app.172.10.0.190.nip.io:31691",
+        "http://app.172.10.0.190.nip.io",
+        "*"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "backchannel.logout.session.required": "true"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "roles",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access"
+      ],
+      "protocolMappers": [
+        {
+          "name": "realm-roles-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "username-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "username",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "preferred_username",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "gv1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Nguyen",
+      "lastName": "Giang Vien",
+      "email": "gv1@example.com",
+      "credentials": [
+        { "type": "password", "value": "123", "temporary": false }
+      ],
+      "realmRoles": ["giangvien"]
+    },
+    {
+      "username": "sv1",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Truong",
+      "lastName": "Sinh Vien",
+      "email": "sv1@gm.uit.edu.vn",
+      "credentials": [
+        { "type": "password", "value": "123", "temporary": false }
+      ],
+      "realmRoles": ["sinhvien"]
+    }
+  ]
+}

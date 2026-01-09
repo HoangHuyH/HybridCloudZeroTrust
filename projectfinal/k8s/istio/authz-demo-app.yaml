@@ -1,0 +1,38 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: demo-app-rbac
+  namespace: demo
+spec:
+  selector:
+    matchLabels:
+      app: demo-app
+  action: ALLOW
+  rules:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RULE 1: Các endpoint công khai - CHỈ CẦN có JWT hợp lệ là được
+  # Áp dụng cho: /, /api/sinhvien, /api/aws, favicon.ico
+  # ═══════════════════════════════════════════════════════════════════════════
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/", "/api/sinhvien", "/api/aws", "/favicon.ico"]
+    from:
+    - source:
+        requestPrincipals: ["*"]  # Bất kỳ ai có JWT hợp lệ
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RULE 2: /api/giangvien - CHỈ CHO PHÉP role "giangvien"
+  # Kiểm tra claim realm_access.roles trong JWT
+  # ═══════════════════════════════════════════════════════════════════════════
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/api/giangvien"]
+    from:
+    - source:
+        requestPrincipals: ["*"]
+    when:
+    # Kiểm tra trong JWT, claim realm_access.roles phải chứa "giangvien"
+    - key: request.auth.claims[realm_access][roles]
+      values: ["giangvien"]

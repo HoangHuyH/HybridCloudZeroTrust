@@ -1,0 +1,40 @@
+# =============================================================================
+# TERRAFORM VARIABLES - EXAMPLE FILE
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to git (contains sensitive data)
+# =============================================================================
+
+# AWS Credentials (get from AWS Console > IAM > Users > Security Credentials)
+aws_access_key = "YOUR_AWS_ACCESS_KEY_ID"
+aws_secret_key = "YOUR_AWS_SECRET_ACCESS_KEY"
+
+# AWS Region
+aws_region = "ap-southeast-1"  # Singapore
+
+# Network Configuration
+vpc_cidr            = "10.100.0.0/16"
+public_subnet_cidr  = "10.100.1.0/24"
+private_subnet_cidr = "10.100.2.0/24"
+
+# OpenStack Configuration
+openstack_cidr          = "172.10.0.0/24"
+openstack_k3s_master_ip = "172.10.0.190"
+
+# WireGuard Configuration
+# Generate keys with: wg genkey | tee privatekey | wg pubkey > publickey
+wg_aws_private_key    = "YOUR_AWS_WIREGUARD_PRIVATE_KEY"
+wg_aws_address        = "10.200.0.1/24"
+openstack_wg_endpoint = "OPENSTACK_PUBLIC_IP:51820"
+openstack_wg_pubkey   = "OPENSTACK_WIREGUARD_PUBLIC_KEY"
+
+# EC2 Configuration
+key_pair_name           = "zta-keypair"
+wireguard_instance_type = "t3.micro"
+workload_instance_type  = "t3.medium"
+
+# Security - Change to your IP for production
+allowed_ssh_cidrs = ["0.0.0.0/0"]
+
+# K3s Token (get from master: cat /var/lib/rancher/k3s/server/node-token)
+k3s_token = ""

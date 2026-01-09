@@ -1,0 +1,22 @@
+# ============================================================
+# KEYCLOAK VIRTUALSERVICE - Route traffic from Istio Gateway
+# ============================================================
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: keycloak-vs
+  namespace: demo
+spec:
+  hosts:
+  - "keycloak.172.10.0.190.nip.io"
+  gateways:
+  - istio-system/zta-gw
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: keycloak.demo.svc.cluster.local
+        port:
+          number: 8080

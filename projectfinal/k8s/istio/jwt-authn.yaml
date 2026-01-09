@@ -1,0 +1,47 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: demo-app-jwt
+  namespace: demo
+spec:
+  selector:
+    matchLabels:
+      app: demo-app
+  jwtRules:
+  # ⚠️ QUAN TRỌNG: Hãy chắc chắn dòng issuer này khớp với dòng "iss" khi bạn soi Token trên jwt.io
+  # Nếu trên jwt.io không có dấu "/" ở cuối thì ở đây cũng không được có.
+  - issuer: "http://keycloak.172.10.0.190.nip.io:31691/realms/zta"
+    forwardOriginalToken: true
+    outputPayloadToHeader: "x-jwt-payload"
+    # Dưới đây là nội dung khóa bạn vừa gửi (Đã được định dạng chuẩn YAML)
+    jwks: |
+      {
+        "keys": [
+          {
+            "kid": "m5uwPCQJ1jqWZJ5CdxXUtYHSP1_bF68ihWvhcv4WiJQ",
+            "kty": "RSA",
+            "alg": "RSA-OAEP",
+            "use": "enc",
+            "n": "w1o0rGWXqqlU8AoHLZplHXB-mbrlbtTUPser-vvTnfzJtbtc73mSi6u64g_vuvYa6ePNn8aDz9SwPdpnKaeRim5gRbSi42leFL6mQgSI_3sZ9kOLQqwyqJF9I--BOI2hh0QJ9e1gS5KawL0lFsJAxsgsKs_uMHLQ7nvFJNBO5b8sxBuxdrAKPpeudrvxvkCfAvSkRkUjiqMjp1UTFYXq-Wk3u5jmFO0jM3s7yiH1suWB42L4Su5Rqqa_iwNAwf3H_8z-XrY5gSwGjBVZkVNtwzW_Kbjh_CDapq7EWjrcbYJHcTvtD-WK0qiBaXs8wzbOtC2wDSbvaRmc6RJpZ9nJZQ",
+            "e": "AQAB",
+            "x5c": [
+              "MIIClTCCAX0CBgGbXtMY4TANBgkqhkiG9w0BAQsFADAOMQwwCgYDVQQDDAN6dGEwHhcNMjUxMjI3MDc1OTExWhcNMzUxMjI3MDgwMDUxWjAOMQwwCgYDVQQDDAN6dGEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDDWjSsZZeqqVTwCgctmmUdcH6ZuuVu1NQ+x6v6+9Od/Mm1u1zveZKLq7riD++69hrp482fxoPP1LA92mcpp5GKbmBFtKLjaV4UvqZCBIj/exn2Q4tCrDKokX0j74E4jaGHRAn17WBLkprAvSUWwkDGyCwqz+4wctDue8Uk0E7lvyzEG7F2sAo+l652u/G+QJ8C9KRGRSOKoyOnVRMVher5aTe7mOYU7SMzezvKIfWy5YHjYvhK7lGqpr+LA0DB/cf/zP5etjmBLAaMFVmRU23DNb8puOH8INqmrsRaOtxtgkdxO+0P5YrSqIFpezzDNs60LbANJu9pGZzpEmln2cllAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAIF+YAreYhBAh/fgi7uEMhQhObi4RUAwnRqEi7JDFI4DxOqMHBbAaTzczJD6IjplxoIZn30iHE/n5/xM7i89Ob4AKHOBobhzy7VD7mjEG3JrVzVP8PjnXaP7uFEfc9R1bS1wykwEAxRdpo7Lnflv1zaqgh85bzIAQQaAthx+Xp0Wfjnxws9cgWi3MSq8DYRBnu3iUgUIYNqCYavycXDL6Ot7MteFsW0f3I+Qj7hOGNJEumc0FqfUXXGreprOOHCjz2mqw/PfxmzeP+Mp0uJ2HJ/U49HgPlyX57zrYET/tSj4Me1MpCVkJI9a23MfU7qnITrV/CBZj/BE/d4I0I1Hyhs="
+            ],
+            "x5t": "Qk6j1c6Pgcnc2wzPCmGSg85CPt0",
+            "x5t#S256": "nbrNvac5m0uhqXaT_jD8RohkubWJb3RK479S2MVuJFM"
+          },
+          {
+            "kid": "ZBK4UUWXHt_cY2pHP0cbzxNq7zz7X2TE8wn9Vr4RXZU",
+            "kty": "RSA",
+            "alg": "RS256",
+            "use": "sig",
+            "n": "3Q1HjdsER728f4DfXTeMYk0OpTO0buov7Sg3m1IYT9ZOcA-BWztCZRLHsdGBUYFo4nGdH891fBnAtQIDvGeA9PJHJ-nn-8yFnDTUIqu94ygG1f9ct68Cgti2Vzk9VEFtfq1FEgIEaVesiSmz5HrHtwT6JoOdwqopAJGAtuX4IvCzAIypFbPqq3uE57PYnczzjm_eeyBOVrk9_QNiUhqoKv-mihHG111VFBk6CYsnxTDPHVFyDUkOLgqh4PJOB297rsixzLhGQs97u0-oaAo3NGd-3-frhiG___aHFjcFg5xe4eNKOKFDkasZsJj_omFS0DzPK4LH1C4uwxnCFu5hrQ",
+            "e": "AQAB",
+            "x5c": [
+              "MIIClTCCAX0CBgGbXtMYCDANBgkqhkiG9w0BAQsFADAOMQwwCgYDVQQDDAN6dGEwHhcNMjUxMjI3MDc1OTExWhcNMzUxMjI3MDgwMDUxWjAOMQwwCgYDVQQDDAN6dGEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDdDUeN2wRHvbx/gN9dN4xiTQ6lM7Ru6i/tKDebUhhP1k5wD4FbO0JlEsex0YFRgWjicZ0fz3V8GcC1AgO8Z4D08kcn6ef7zIWcNNQiq73jKAbV/1y3rwKC2LZXOT1UQW1+rUUSAgRpV6yJKbPkese3BPomg53CqikAkYC25fgi8LMAjKkVs+qre4Tns9idzPOOb957IE5WuT39A2JSGqgq/6aKEcbXXVUUGToJiyfFMM8dUXINSQ4uCqHg8k4Hb3uuyLHMuEZCz3u7T6hoCjc0Z37f5+uGIb//9ocWNwWDnF7h40o4oUORqxmwmP+iYVLQPM8rgsfULi7DGcIW7mGtAgMBAAEwDQYJKoZIhvcNAQELBQADggEBACA0ml0lrpSB2yiG5XomWboGMpc+Z3Pp1216mnacHR/+GI22JkBqZ5DsOPzGdVhjWqCC+QWL/uuUYfnBZtofEKlpxuwBCfGCXFBWImDL9nMm6OqmTENr8XUvNKnMyBE0OKnMfBgHXYVj1XH/d4fvjm93RrnT+QYcvPkqA9upJ/mWzumv4CLN3RrF4R3y87/QGYA/BmFON+/niUMgjeXh3tGS6+CwjbMHQNza3ulNpkzZOBOODk3uzP5Hdc/7LQcvemSNxo0DzLrDr7QIM6dKjEKBHWQdHbekLLrCYvaOsbc+Vm2hhey+Q61G5q4BfrXS7u4IXGg+ImgtFBA6uiBJoRg="
+            ],
+            "x5t": "V2VEXt8IuCV0GRhdPDIA1ZbkByk",
+            "x5t#S256": "2JTvHkBgRhxrdIJuBjYr01sfKKjKLwMNmZk18VYbeao"
+          }
+        ]
+      }

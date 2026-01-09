@@ -1,0 +1,43 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: tkb-virtualservice
+  namespace: microservices
+spec:
+  hosts:
+    - "app.172.10.0.190.nip.io"
+  gateways:
+    - demo/zta-gateway
+  http:
+    # Route /api/tkb to TKB service on AWS
+    - match:
+        - uri:
+            prefix: /api/tkb
+      route:
+        - destination:
+            host: tkb-service.microservices.svc.cluster.local
+            port:
+              number: 80
+      headers:
+        response:
+          add:
+            x-served-by: "AWS-Singapore"
+            x-service: "tkb-service"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: tkb-destination
+  namespace: microservices
+spec:
+  host: tkb-service.microservices.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        h2UpgradePolicy: UPGRADE
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+    loadBalancer:
+      simple: ROUND_ROBIN

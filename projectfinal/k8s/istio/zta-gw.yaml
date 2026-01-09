@@ -1,0 +1,21 @@
+# ============================================================
+# ZTA GATEWAY - Istio Ingress Gateway for Zero Trust Architecture
+# ============================================================
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: zta-gw
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    # Keycloak - Identity Provider
+    - "keycloak.172.10.0.190.nip.io"
+    # Demo Application (via OAuth2-Proxy)
+    - "app.172.10.0.190.nip.io"

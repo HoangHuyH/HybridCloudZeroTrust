@@ -1,0 +1,12 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: demo-app-rbac
+  namespace: demo
+spec:
+  selector:
+    matchLabels:
+      app: demo-app
+  action: ALLOW
+  rules:
+  - {} # Cho phép tất cả, không cần điều kiện gì

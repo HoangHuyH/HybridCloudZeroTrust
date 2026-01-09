@@ -1,0 +1,24 @@
+# ============================================================
+# DEMO APP VIRTUALSERVICE - Route traffic through OAuth2-Proxy
+# ============================================================
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: demo-app-vs
+  namespace: demo
+spec:
+  hosts:
+  - "app.172.10.0.190.nip.io"
+  gateways:
+  - istio-system/zta-gw
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        # Route ALL traffic through OAuth2-Proxy first
+        # OAuth2-Proxy will handle authentication and forward to demo-app
+        host: oauth2-proxy.demo.svc.cluster.local
+        port:
+          number: 4180

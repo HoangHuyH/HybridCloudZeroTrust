@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opa-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-policy
+  namespace: opa-system
+data:
+  authz.rego: |
+    package zta.authz
+
+    default allow = false
+
+    role_permissions = {
+        "giangvien": ["/api/giangvien", "/api/sinhvien", "/api/tkb", "/api/me"],
+        "sinhvien": ["/api/sinhvien", "/api/tkb", "/api/me"]
+    }
+
+    public_endpoints = ["/", "/health", "/ready", "/oauth2/callback"]
+
+    # Allow public endpoints
+    allow {
+        input.path == public_endpoints[_]
+    }
+
+    # Allow authenticated users with proper role
+    allow {
+        input.user != ""
+        groups := split(input.groups, ",")
+        role := groups[_]
+        allowed_paths := role_permissions[role]
+        input.path == allowed_paths[_]
+    }
+
+    # Deny reason
+    reason = "User not authenticated" {
+        input.user == ""
+        not allow
+    }
+
+    reason = "Access denied for this role" {
+        input.user != ""
+        not allow
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa
+  namespace: opa-system
+  labels:
+    app: opa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opa
+  template:
+    metadata:
+      labels:
+        app: opa
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+      tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+        - name: opa
+          image: openpolicyagent/opa:0.55.0
+          args:
+            - "run"
+            - "--server"
+            - "--addr=0.0.0.0:8181"
+            - "--log-level=info"
+            - "--log-format=json"
+            - "/policies/authz.rego"
+          ports:
+            - containerPort: 8181
+              name: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: opa-policy
+              mountPath: /policies
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health?bundle=true
+              port: 8181
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: opa-policy
+          configMap:
+            name: opa-policy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opa
+  namespace: opa-system
+  labels:
+    app: opa
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8181
+      targetPort: 8181
+      name: http
+  selector:
+    app: opa

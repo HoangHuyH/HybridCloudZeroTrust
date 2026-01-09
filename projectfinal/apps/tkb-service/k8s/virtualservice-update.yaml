@@ -1,0 +1,33 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: demo-app-vs
+  namespace: demo
+spec:
+  gateways:
+    - istio-system/zta-gw
+  hosts:
+    - "app.172.10.0.190.nip.io"
+  http:
+    # Route /api/tkb through oauth2-proxy then to TKB service
+    - match:
+        - uri:
+            prefix: /api/tkb
+      route:
+        - destination:
+            host: oauth2-proxy.demo.svc.cluster.local
+            port:
+              number: 4180
+      headers:
+        response:
+          add:
+            x-served-by: "AWS-Singapore-via-WireGuard"
+    # All other routes go through oauth2-proxy
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: oauth2-proxy.demo.svc.cluster.local
+            port:
+              number: 4180

@@ -1,0 +1,176 @@
+---
+# SPIRE Agent DaemonSet for Zero Trust Workload Identity
+# Runs on each node to provide workload attestation
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spire-agent
+  namespace: spire
+---
+# SPIRE Agent ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: spire-agent-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "nodes", "nodes/proxy"]
+  verbs: ["get", "list", "watch"]
+---
+# SPIRE Agent ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: spire-agent-binding
+subjects:
+- kind: ServiceAccount
+  name: spire-agent
+  namespace: spire
+roleRef:
+  kind: ClusterRole
+  name: spire-agent-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# SPIRE Agent ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-agent-config
+  namespace: spire
+data:
+  agent.conf: |
+    agent {
+      data_dir = "/run/spire"
+      log_level = "DEBUG"
+      server_address = "spire-server"
+      server_port = "8081"
+      socket_path = "/run/spire/sockets/agent.sock"
+      trust_domain = "zta.local"
+      
+      # Trust bundle from SPIRE Server
+      trust_bundle_path = "/run/spire/bundle/bundle.crt"
+    }
+
+    plugins {
+      NodeAttestor "k8s_psat" {
+        plugin_data {
+          cluster = "zta-cluster"
+        }
+      }
+
+      KeyManager "memory" {
+        plugin_data {}
+      }
+
+      WorkloadAttestor "k8s" {
+        plugin_data {
+          skip_kubelet_verification = true
+        }
+      }
+    }
+
+    health_checks {
+      listener_enabled = true
+      bind_address = "0.0.0.0"
+      bind_port = "8080"
+      live_path = "/live"
+      ready_path = "/ready"
+    }
+---
+# SPIRE Agent DaemonSet
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: spire-agent
+  namespace: spire
+  labels:
+    app: spire-agent
+spec:
+  selector:
+    matchLabels:
+      app: spire-agent
+  template:
+    metadata:
+      labels:
+        app: spire-agent
+    spec:
+      hostPID: true
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      serviceAccountName: spire-agent
+      initContainers:
+      - name: init-bundle
+        image: ghcr.io/spiffe/spire-server:1.8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Wait for SPIRE Server and get bundle
+          while ! /opt/spire/bin/spire-server bundle show -socketPath /tmp/dummy 2>/dev/null; do
+            echo "Waiting for SPIRE Server..."
+            sleep 5
+          done
+          cp /run/spire/bundle/bundle.crt /bundle/bundle.crt || true
+        volumeMounts:
+        - name: spire-bundle
+          mountPath: /bundle
+        - name: trust-bundle
+          mountPath: /run/spire/bundle
+          readOnly: true
+      containers:
+      - name: spire-agent
+        image: ghcr.io/spiffe/spire-agent:1.8.0
+        args: ["-config", "/run/spire/config/agent.conf"]
+        ports:
+        - containerPort: 8080
+          name: health
+        volumeMounts:
+        - name: spire-config
+          mountPath: /run/spire/config
+          readOnly: true
+        - name: spire-bundle
+          mountPath: /run/spire/bundle
+          readOnly: true
+        - name: spire-agent-socket
+          mountPath: /run/spire/sockets
+        - name: spire-token
+          mountPath: /var/run/secrets/tokens
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: spire-config
+        configMap:
+          name: spire-agent-config
+      - name: spire-bundle
+        emptyDir: {}
+      - name: trust-bundle
+        configMap:
+          name: trust-bundle
+      - name: spire-agent-socket
+        hostPath:
+          path: /run/spire/sockets
+          type: DirectoryOrCreate
+      - name: spire-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: spire-agent
+              expirationSeconds: 7200
+              audience: spire-server

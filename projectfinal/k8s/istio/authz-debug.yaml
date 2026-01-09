@@ -1,0 +1,18 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: demo-app-rbac
+  namespace: demo
+spec:
+  selector:
+    matchLabels:
+      app: demo-app
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        paths: ["/"]
+    # Kiểm tra thô: Chỉ cần có Header Authorization là được
+    when:
+    - key: request.headers[Authorization]
+      values: ["*"]

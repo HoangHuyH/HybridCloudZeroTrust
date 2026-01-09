@@ -1,0 +1,102 @@
+{
+  "id": "aws-federation",
+  "clientId": "aws-federation",
+  "name": "AWS IAM Federation Client",
+  "description": "Keycloak client for AWS IAM OIDC Federation",
+  "enabled": true,
+  "clientAuthenticatorType": "client-secret",
+  "secret": "aws-federation-secret",
+  "redirectUris": [
+    "https://signin.aws.amazon.com/oauth",
+    "http://localhost:8080/callback",
+    "http://app.172.10.0.190.nip.io:31691/aws-callback"
+  ],
+  "webOrigins": [
+    "https://signin.aws.amazon.com",
+    "http://app.172.10.0.190.nip.io:31691"
+  ],
+  "standardFlowEnabled": true,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": true,
+  "serviceAccountsEnabled": false,
+  "publicClient": false,
+  "frontchannelLogout": false,
+  "protocol": "openid-connect",
+  "attributes": {
+    "access.token.lifespan": "3600",
+    "saml.assertion.signature": "false",
+    "saml.force.post.binding": "false",
+    "saml.multivalued.roles": "false",
+    "saml.encrypt": "false",
+    "oauth2.device.authorization.grant.enabled": "false",
+    "backchannel.logout.revoke.offline.tokens": "false",
+    "saml.server.signature": "false",
+    "saml.server.signature.keyinfo.ext": "false",
+    "use.refresh.tokens": "true",
+    "exclude.session.state.from.auth.response": "false",
+    "oidc.ciba.grant.enabled": "false",
+    "saml.artifact.binding": "false",
+    "backchannel.logout.session.required": "true",
+    "client_credentials.use_refresh_token": "false",
+    "saml_force_name_id_format": "false",
+    "saml.client.signature": "false",
+    "tls.client.certificate.bound.access.tokens": "false",
+    "require.pushed.authorization.requests": "false",
+    "saml.authnstatement": "false",
+    "display.on.consent.screen": "false",
+    "saml.onetimeuse.condition": "false"
+  },
+  "protocolMappers": [
+    {
+      "name": "groups",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-group-membership-mapper",
+      "consentRequired": false,
+      "config": {
+        "full.path": "false",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "groups",
+        "userinfo.token.claim": "true"
+      }
+    },
+    {
+      "name": "audience-aws",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper",
+      "consentRequired": false,
+      "config": {
+        "included.client.audience": "aws-federation",
+        "id.token.claim": "true",
+        "access.token.claim": "true"
+      }
+    },
+    {
+      "name": "aws-account-id",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-hardcoded-claim-mapper",
+      "consentRequired": false,
+      "config": {
+        "claim.value": "YOUR_AWS_ACCOUNT_ID",
+        "userinfo.token.claim": "true",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "aws_account_id",
+        "claim.type": "String"
+      }
+    }
+  ],
+  "defaultClientScopes": [
+    "web-origins",
+    "acr",
+    "profile",
+    "roles",
+    "email"
+  ],
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ]
+}
